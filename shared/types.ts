@@ -35,3 +35,9 @@ export interface GameSession {
     createdAt: Date;
 gameState: GameState;
 }
+export interface GameStartPayload{
+    sessionId: string;
+    opponent: PlayerInfo;
+    self: PlayerInfo & { isPlayerOne: boolean };
+
+}
