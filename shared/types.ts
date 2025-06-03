@@ -3,6 +3,10 @@ export interface PlayerInfo {
   id: PlayerId;
   name: string;
 }
+export interface JoinGamePayload { 
+    playerName: string;
+}
+
 export interface Paddle {
     id: PlayerId;
     x: number;
