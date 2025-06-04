@@ -1,9 +1,11 @@
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { socketService } from './services/socketService';
+import JoinGameForm from './JoinGameForm';
 
 function App() {
+      const [view, setView] = useState<'joining' | 'in_game' | 'game_over'>('joining');
    useEffect(() => {
     const initConnection = async () => {
       try {
@@ -32,7 +34,7 @@ function App() {
 
   return (
     <>
-      
+      {view=='joining'&&<JoinGameForm></JoinGameForm>}
     </>
   )
 }
