@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { socketService } from "./services/socketService";
+import { socketService } from "../services/socketService";
 import { JoinGamePayload } from "@shared/types";
 function JoinGameForm() {
     const [playerName, setPlayerName] = useState('');
