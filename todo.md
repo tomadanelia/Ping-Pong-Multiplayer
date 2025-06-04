@@ -382,3 +382,85 @@
         -   [ ] Transition view state to allow starting a new game (e.g., back to 'joining' or a specific 'disconnected' state).
 
 This `todo.md` should cover all the detailed steps from the blueprint.
+
+
+Pong Multiplayer Game: TODO Checklist (2-Day MVP Focus)
+Phase 0: Project Setup & Foundational Types
+Status: Mostly COMPLETE (Based on our previous interactions)
+[MVP] Step 0.1: Backend & Frontend Project Initialization.
+[MVP] Step 0.2: Shared Types Definition.
+[MVP] Step 0.3: Basic Server Setup & Client Connection (Handshake).
+Phase 1: Player Joining & Basic Matchmaking (Server-Side)
+Status: Mostly COMPLETE (Your MatchmakingService and PlayerService are well on their way, server index.ts integration is next)
+[MVP] Step 1.1: Player Management & joinGame Event (Server index.ts integration).
+[MVP] Step 1.2: Matchmaking Queue & Game Session Creation (Server index.ts integration - emitting gameStart).
+[MVP] Step 1.3: Player Disconnection Handling (Basic - end game if in session, remove from queue).
+Phase 2: Initial UI & Client-Side Join Flow
+[MVP] Step 2.1: "Join Game" UI
+[MVP] Client (client/src/components/JoinGameForm.tsx): Input, button, emit joinGame.
+[MVP] Client (client/src/App.tsx): Conditional render JoinGameForm.
+[MVP] Step 2.2: Game Screen Stub & Transition
+[MVP] Client (client/src/components/GameScreen.tsx): Placeholder, props, basic "Playing vs X" display.
+[MVP] Client (client/src/App.tsx): State for session/player info, listen for gameStart, transition view.
+Phase 3: Paddle Implementation (Core Mechanics)
+[MVP] Step 3.1: Server-Side Paddle Logic & Initial State
+[MVP] Server (in MatchmakingService's session creation): Review and ensure paddles are correctly initialized (X, Y, dimensions).
+[MVP] Step 3.2: Client-Side Paddle Rendering
+[MVP] Client (client/src/components/Paddle.tsx): Simple paddle component.
+[MVP] Client (client/src/components/GameScreen.tsx): Render two Paddle components, map server data.
+[MVP] Step 3.3: Client-Side Paddle Input & Prediction
+[MVP] Shared Types: Define PaddleMovePayload.
+[MVP] Client (client/src/components/GameScreen.tsx): Mouse listener, local update, emit paddleMove.
+[MVP] Step 3.4: Server-Side Paddle Update & Broadcast
+[MVP] Shared Types: Define GameStateUpdatePayload (for paddles).
+[MVP] Server (server/src/index.ts): Handle paddleMove, validate, update GameSession.gameState.
+[MVP] Server: Broadcast GameStateUpdatePayload (can be directly on paddleMove for MVP, game loop later).
+[MVP] Step 3.5: Client-Side Paddle Synchronization
+[MVP] Client (client/src/components/GameScreen.tsx): Listen for gameStateUpdate, update opponent paddle, (simple) update own paddle.
+Phase 4: Ball Implementation (Movement & Wall Collision)
+[MVP] Step 4.1: Server-Side Ball Logic & Game Loop
+[MVP] Server (New GameLoopService.ts or logic within GameSession instances managed by matchmakingService or index.ts):
+[MVP] Initialize ball in GameSession.gameState.
+[MVP] Implement setInterval game loop per active session.
+[MVP] Update ball position (ball.x += ball.dx, ball.y += ball.dy).
+[MVP] Broadcast GameStateUpdatePayload (now including ball and paddles) from the loop.
+[MVP] Logic to start/stop game loop for a session.
+[MVP] Step 4.2: Server-Side Ball Wall Collision & Initial Serve
+[MVP] Server (in game loop): Implement collision with top/bottom walls (simple ball.dy *= -1).
+[MVP] Server (in game loop or a "serve" function): Implement initial serve logic (reset ball to center, basic randomized velocity towards a player).
+[MVP] Step 4.3: Client-Side Ball Rendering
+[MVP] Client (client/src/components/Ball.tsx): Simple ball component.
+[MVP] Client (client/src/components/GameScreen.tsx): Render Ball, update from gameStateUpdate (direct update, no interpolation for MVP).
+[Stretch] Client-side Ball Interpolation.
+Phase 5: Core Game Loop: Paddle-Ball Collision & Scoring
+[MVP] Step 5.1: Server-Side Paddle-Ball Collision
+[MVP] Server (in game loop): AABB collision detection, simple bounce (ball.dy *= -1). Prevent sticking.
+[MVP] Step 5.2: Server-Side Scoring Logic
+[MVP] Server (in game loop): Detect ball passing baseline, increment score.
+[MVP] Step 5.3: Server-Side Post-Score Reset
+[MVP] Server (in game loop): Call serve logic. Broadcast updated scores and ball state.
+[MVP] Step 5.4: Client-Side Score Display
+[MVP] Client (client/src/components/ScoreBoard.tsx): Basic score display.
+[MVP] Client (client/src/components/GameScreen.tsx): Render and update ScoreBoard.
+Phase 6: Advanced Ball Physics (Server-Side)
+[Post-MVP] Step 6.1: Angle Modification on Paddle Hit.
+[Post-MVP] Step 6.2: "Spin" Mechanic.
+[Post-MVP] Step 6.3: Ball Speed Controls (Max/Min, Reset on Score).
+(Note: Basic reset to INITIAL_BALL_SPEED on score might be an MVP-friendly part of Step 5.3)
+Phase 7: Game End & Post-Game Flow
+[MVP] Step 7.1: Server-Side Win Condition
+[MVP] Shared Types: Define GameOverPayload.
+[MVP] Server (in game loop, after score update): Check MAX_SCORE, stop loop, broadcast gameOver.
+[MVP] Step 7.2: Client-Side Game Over UI
+[MVP] Client (client/src/App.tsx or GameScreen.tsx): Listen for gameOver, display "Winner is..." message.
+[Stretch] Show "Play Again" / "New Game" buttons (without full functionality yet, just UI).
+[Post-MVP] Step 7.3: Server & Client Logic for "Play Again" / "New Game".
+Phase 8: Refinements & Polish
+[Stretch] Step 8.1: Audio Integration (Basic hit/score sounds).
+[Post-MVP] Full audio integration.
+[Stretch] Step 8.2: Visual Polish (Basic colors, clean layout).
+[Post-MVP] Full visual polish, responsiveness.
+[Post-MVP] Step 8.3: Gameplay Tuning.
+[MVP] Step 8.4: Robust Disconnection Handling (Revisit - ensure current MVP disconnect logic is sound).
+The disconnect logic in server/index.ts from our previous discussion (ending game, notifying opponent) is good for MVP.
+[Post-MVP] Handle more complex disconnect scenarios (e.g., during rematch decisions).
