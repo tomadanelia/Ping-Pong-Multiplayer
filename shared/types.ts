@@ -40,3 +40,7 @@ export interface GameStartPayload{
     self: PlayerInfo & { isPlayerOne: boolean };
 
 }
+export interface GameStateUpdatePayload {
+     ball?: Ball,
+      paddles: { [playerId: PlayerId]: { x: number } },
+       scores?: { [playerId: PlayerId]: number } }
