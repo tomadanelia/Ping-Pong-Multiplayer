@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Paddle from './Paddle';
 import { socketService } from '../services/socketService';
-import { GameState, Paddle as PaddleType, PlayerInfo } from '@shared/types'; // Renamed Paddle type to avoid conflict
+import { GameState, PaddleMovePayload, Paddle as PaddleType, PlayerInfo, SocketEvents } from '@shared/types'; // Renamed Paddle type to avoid conflict
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
@@ -24,7 +24,17 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
   const [opponentPaddleX, setOpponentPaddleX] = useState<number>(GAME_WIDTH / 2 - PADDLE_WIDTH / 2);
   const ownPaddleVisualY = GAME_HEIGHT - PADDLE_OFFSET_Y - PADDLE_HEIGHT;
   const opponentPaddleVisualY = PADDLE_OFFSET_Y;
-
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const gameArea = event.currentTarget;
+    const rect = gameArea.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left; // Get mouse X relative to the game area
+    const newPaddleX = Math.max(0, Math.min(mouseX - PADDLE_WIDTH / 2, GAME_WIDTH - PADDLE_WIDTH));
+    
+    setOwnPaddleX(newPaddleX);
+    
+    // Emit paddle position to server
+    socketService.emit<PaddleMovePayload>('paddleMove', { newx:newPaddleX });
+  }
   useEffect(() => {
     const handleGameStateUpdate = (data: GameStateUpdatePayload) => {
       const serverSelfPaddle = data.players.find(p => p.id === selfInfo.id);
@@ -63,7 +73,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
       <p>Playing as: {selfInfo.name} (You) vs {opponentInfo.name}</p>
       {selfInfo.isPlayerOne ? <p>(You are defending the bottom)</p> : <p>(You are defending the top)</p>}
 
-      <div style={gameAreaStyle} data-testid="game-area">
+      <div style={gameAreaStyle} data-testid="game-area" onMouseMove={handleMouseMove}>
         <Paddle
           x={ownPaddleX}
           y={ownPaddleVisualY}
