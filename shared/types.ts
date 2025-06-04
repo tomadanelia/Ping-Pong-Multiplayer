@@ -16,7 +16,7 @@ export interface Paddle {
 }
 export interface Ball {
     position: { x: number; y: number };
-    velocity: { x: number; y: number };
+    velocity: { dx: number; dy: number };
     radius: number;
 }
 export interface GameState {
