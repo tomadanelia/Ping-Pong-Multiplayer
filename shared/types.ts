@@ -33,7 +33,6 @@ export interface GameSession {
     state: GameState;
     started: boolean;
     createdAt: Date;
-gameState: GameState;
 }
 export interface GameStartPayload{
     sessionId: string;
