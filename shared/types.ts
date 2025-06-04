@@ -44,3 +44,11 @@ export interface GameStateUpdatePayload {
      ball?: Ball,
       paddles: { [playerId: PlayerId]: { x: number } },
        scores?: { [playerId: PlayerId]: number } }
+export enum SocketEvents {
+    'gameStart',
+    'gameStateUpdate',
+    'paddleMove',
+};
+export interface PaddleMovePayload{
+newx:number;
+}
