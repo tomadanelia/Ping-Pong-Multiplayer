@@ -1,4 +1,5 @@
 // ... (imports and other state)
+import "./App.css";
 import { useEffect, useState } from "react";
 import GameScreen from "./components/GameScreen";
 import JoinGameForm from "./components/JoinGameForm";
@@ -53,8 +54,8 @@ function App() {
 
 
   return (
-    <>
-      {view === 'joining' &&<JoinGameForm />}
+    <div className="root">
+      {view === 'joining' &&<div className="joingameform"><JoinGameForm /></div>}
       {view === "in_game" && self && ( 
         <GameScreen
           sessionId={sessionId}
@@ -63,7 +64,7 @@ function App() {
         />
       )}
       {/* You'll add logic for 'game_over' view later */}
-    </>
+    </div>
   )
 }
 

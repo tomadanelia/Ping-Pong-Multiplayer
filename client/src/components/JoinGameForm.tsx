@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { socketService } from "../services/socketService";
 import { JoinGamePayload } from "@shared/types";
+import "./Paddle.css";
 function JoinGameForm() {
     const [playerName, setPlayerName] = useState('');
     const handleSubmit = (e: React.FormEvent) => {
@@ -14,7 +15,7 @@ function JoinGameForm() {
 
     return (
         <form onSubmit={handleSubmit} >
-            <input 
+            <input className="input"
                 type="text"
                 id="playerName"
                 placeholder="Write name"

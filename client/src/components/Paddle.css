@@ -1,3 +1,25 @@
 .paddle{
   background-color: blue;
 }
+.input{
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background-color: white;
+  color: black;
+  font-size: 1.5rem;
+  text-align: center;
+}
+button{
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  color: white;
+    background-color: rgb(79, 255, 123);
+  font-size: 1.5rem;
+  text-align: center;
+}
+button:hover{
+background-color: blue;}
