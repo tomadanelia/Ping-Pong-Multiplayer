@@ -32,6 +32,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
     x: GAME_WIDTH / 2,
     y: GAME_HEIGHT / 2,
   });
+  const [ballVelocity, setBallVelocity] = useState<Ball['velocity']>({ dx: 0, dy: 0 });
 
   // useState for scores
   const [scores, setScores] = useState<{ [playerId: PlayerId]: number }>({
@@ -42,6 +43,31 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
   const ownPaddleVisualY = GAME_HEIGHT - PADDLE_OFFSET_Y - PADDLE_HEIGHT;
   const opponentPaddleVisualY = PADDLE_OFFSET_Y;
 
+  // Transform coordinates for Player 2's perspective
+  const transformX = (x: number) => {
+    if (selfInfo.isPlayerOne) return x;
+    return GAME_WIDTH - x - PADDLE_WIDTH; // Mirror X coordinate and account for paddle width
+  };
+
+  // Transform ball position and velocity for Player 2's perspective
+  const getTransformedBallState = (ball: Ball) => {
+    if (selfInfo.isPlayerOne) {
+      return ball;
+    }
+    
+    return {
+      position: {
+        x: GAME_WIDTH - ball.position.x,
+        y: GAME_HEIGHT - ball.position.y
+      },
+      velocity: {
+        dx: -ball.velocity.dx,
+        dy: -ball.velocity.dy
+      },
+      radius: ball.radius
+    };
+  };
+
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const gameArea = event.currentTarget;
     const rect = gameArea.getBoundingClientRect();
@@ -51,8 +77,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
     newPaddleX = Math.max(0, newPaddleX);
     newPaddleX = Math.min(newPaddleX, GAME_WIDTH - PADDLE_WIDTH);
 
+    // For Player 2, we need to transform the X coordinate before sending to server
+    const serverX = selfInfo.isPlayerOne ? newPaddleX : GAME_WIDTH - newPaddleX - PADDLE_WIDTH;
+    
     setOwnPaddleX(newPaddleX);
-    socketService.emit<PaddleMovePayload>('paddleMove', { newx: newPaddleX });
+    socketService.emit<PaddleMovePayload>('paddleMove', { newx: serverX });
   };
 
   useEffect(() => {
@@ -60,16 +89,20 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
       if (data.paddles) {
         const selfPaddleUpdate = data.paddles[selfInfo.id];
         if (selfPaddleUpdate) {
-          setOwnPaddleX(selfPaddleUpdate.x);
+          // Transform the X coordinate for display
+          setOwnPaddleX(transformX(selfPaddleUpdate.x));
         }
         const opponentPaddleUpdate = data.paddles[opponentInfo.id];
         if (opponentPaddleUpdate) {
-          setOpponentPaddleX(opponentPaddleUpdate.x);
+          // Transform the X coordinate for display
+          setOpponentPaddleX(transformX(opponentPaddleUpdate.x));
         }
       }
 
       if (data.ball) {
-        setBallPosition(data.ball.position);
+        const transformedBall = getTransformedBallState(data.ball);
+        setBallPosition(transformedBall.position);
+        setBallVelocity(transformedBall.velocity);
       }
 
       // On gameStateUpdate received, update local score states
@@ -80,8 +113,6 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
 
     socketService.on<SharedGameStateUpdatePayload>('gameStateUpdate', handleGameStateUpdate);
     console.log(`GameScreen mounted for session: ${sessionId}, Self: ${selfInfo.name} (${selfInfo.id}), Opponent: ${opponentInfo.name} (${opponentInfo.id})`);
-
-
 
     return () => {
       console.log(`GameScreen unmounted for session: ${sessionId}`);
