@@ -1,0 +1,20 @@
+{
+  "name": "ping-pong-multiplayer",
+  "version": "1.0.0",
+  "description": "Multiplayer Ping Pong Game",
+  "scripts": {
+    "client:dev": "cd client && npm run dev",
+    "server:dev": "cd server && npm run dev",
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    
+    "client:prod": "cd client && npm run preview",
+    "server:prod": "cd server && npm start",
+    "prod": "concurrently \"npm run server:prod\" \"npm run client:prod\"",
+    
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "build": "cd client && npm run build && cd ../server && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 
