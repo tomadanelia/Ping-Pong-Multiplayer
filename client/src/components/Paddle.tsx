@@ -1,3 +1,5 @@
+import './Paddle.css'; // Import the CSS file
+
 interface PaddleProps {
     x: number;
     y: number;
@@ -11,11 +13,11 @@ function Paddle({ x, y, width, height }: PaddleProps) {
         left: `${x}px`,
         top: `${y}px`,
         width: `${width}px`,
-        height: `${height}px`
+        height: `${height}px`,
     };
 
     return (
-        <div style={paddleStyle}></div>
+        <div style={paddleStyle} className="paddle"></div>
     );
 }
 
