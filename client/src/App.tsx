@@ -1,5 +1,4 @@
 // ... (imports and other state)
-
 import { useEffect, useState } from "react";
 import GameScreen from "./components/GameScreen";
 import JoinGameForm from "./components/JoinGameForm";
@@ -55,7 +54,7 @@ function App() {
 
   return (
     <>
-      {view === 'joining' && <JoinGameForm />}
+      {view === 'joining' &&<JoinGameForm />}
       {view === "in_game" && self && ( 
         <GameScreen
           sessionId={sessionId}

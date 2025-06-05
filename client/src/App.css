@@ -1,0 +1,16 @@
+html, body {
+  height: 100%;
+  margin: 0; /* Reset default margins */
+}
+
+.root {
+  display: flex;
+  min-height: 100vh; /* Use 100vh to fill the viewport height */
+  background-color: #bd2828;
+}
+.joingameform {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%; /* Take up the full width of its parent */
+}
