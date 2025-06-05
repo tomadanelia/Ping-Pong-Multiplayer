@@ -1,20 +1,32 @@
+// server/src/index.ts
 /**
  * Socket.IO multiplayer server for Pong game.
  * Handles player connections, matchmaking, game session creation, and disconnection logic.
- * 
+ *
  * Key events:
  * - `joinGame`: Player joins matchmaking queue.
+ * - `paddleMove`: Player moves their paddle. // New
  * - `disconnect`: Handles player leaving the game or queue.
- * 
+ *
  * Matchmaking is managed via `matchmakingService`, and player tracking via `playerService`.
  */
 import express from 'express';
 import { createServer } from 'http';
-import { Server, Socket as ServerSocketIo } from 'socket.io'; // Renamed Socket to avoid conflict if needed
+import { Server, Socket as ServerSocketIo } from 'socket.io';
 import { playerService } from './services/playerService';
 import { matchmakingService } from './services/matchmakingService';
 import { randomUUID } from 'crypto';
-import { GameStartPayload, PlayerInfo } from '@shared/types'; 
+
+import {
+    GameStartPayload,
+    PlayerInfo,
+    PaddleMovePayload,         
+    GameStateUpdatePayload     
+} from '@shared/types';
+import {
+    GAME_WIDTH,                
+    PADDLE_WIDTH               
+} from '@shared/constants';
 
 interface SocketData {
     playerId?: string;
@@ -35,34 +47,19 @@ const PORT = process.env.PORT || 3000;
 app.get('/', (_req, res) => {
     res.send('Pong server is running!');
 });
- /**
-     * Fired when a new client connects.
-     * Sets up listeners for 'joinGame' and 'disconnect'.
-     * 
-     * @param {Socket} socket - The connected client socket.
-     */
-io.on('connection', (socket) => { 
+
+io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
- /**
-         * Adds the player to the matchmaking queue and starts a game if a match is found.
-         * 
-         * @event joinGame
-         * @param {string} name - The player's chosen display name.
-         * 
-         * Emits:
-         * - 'gameStart': when a match is successfully created.
-         * - 'matchFailed': if an opponent disconnects before the game starts.
-         */
+
     socket.on('joinGame', (name: string) => {
         if (!name || typeof name !== 'string' || name.trim() === '') {
             console.error(`Invalid player name received from socket ${socket.id}: '${name}'`);
-            // socket.emit('joinGameError', { message: 'Invalid player name provided.' });
             return;
         }
 
-        const playerId = randomUUID();
-        const player = playerService.addPlayer(playerId, name);
-        socket.data.playerId = player.id; // Associate this socket instance with the player ID
+        const playerId = randomUUID(); 
+        const player = playerService.addPlayer(playerId, name); 
+        socket.data.playerId = player.id;
 
         console.log(`Player ${player.name} (ID: ${player.id}, Socket: ${socket.id}) trying to join game.`);
 
@@ -76,7 +73,6 @@ io.on('connection', (socket) => {
 
             if (!player1Info || !player2Info) {
                 console.error(`Critical error: Player info not found for game session ${gameSession.id}. P1_ID: ${gameSession.bottomPlayerId}, P2_ID: ${gameSession.topPlayerId}. This session will be aborted.`);
-                // Cleanup attempt: remove players from queue and the session itself
                 matchmakingService.removePlayerFromQueue(gameSession.bottomPlayerId);
                 matchmakingService.removePlayerFromQueue(gameSession.topPlayerId);
                 matchmakingService.removeSession(gameSession.id);
@@ -94,7 +90,7 @@ io.on('connection', (socket) => {
                     player2Socket = connectedSocket;
                 }
                 if (player1Socket && player2Socket) {
-                    break; 
+                    break;
                 }
             }
 
@@ -106,19 +102,20 @@ io.on('connection', (socket) => {
                 const gameStartPayloadP1: GameStartPayload = {
                     sessionId: gameSession.id,
                     opponent: player2Info,
-                    self: { ...player1Info, isPlayerOne: true } // bottomPlayer is considered Player One
+                    self: { ...player1Info, isPlayerOne: true }
                 };
                 player1Socket.emit('gameStart', gameStartPayloadP1);
 
                 const gameStartPayloadP2: GameStartPayload = {
                     sessionId: gameSession.id,
                     opponent: player1Info,
-                    self: { ...player2Info, isPlayerOne: false } 
+                    self: { ...player2Info, isPlayerOne: false }
                 };
                 player2Socket.emit('gameStart', gameStartPayloadP2);
-            } else {
-                console.error(`Could not find active sockets for one or both players in session ${gameSession.id}. Player1 Found: ${!!player1Socket}, Player2 Found: ${!!player2Socket}. This can happen if a player disconnects just as a match is being formed. Aborting session.`);
+
                
+            } else {
+                console.error(`Could not find active sockets for one or both players in session ${gameSession.id}. Player1 Found: ${!!player1Socket}, Player2 Found: ${!!player2Socket}. Aborting session.`);
                 matchmakingService.removePlayerFromQueue(player1Info.id);
                 matchmakingService.removePlayerFromQueue(player2Info.id);
                 matchmakingService.removeSession(gameSession.id);
@@ -136,64 +133,82 @@ io.on('connection', (socket) => {
             console.log(`Player ${player.name} (ID: ${player.id}) was added to the matchmaking queue. Waiting for an opponent.`);
         }
     });
-/**
-         * Handles player disconnection.
-         * Removes player from queue or active game session.
-         * Notifies opponent if one existed.
-         * 
-         * @event disconnect
-         * 
-         * Emits (to opponent):
-         * - 'opponentDisconnected': if the disconnected player was in a session.
-         */
+
+    socket.on('paddleMove', (payload: PaddleMovePayload) => {
+        const playerId = socket.data.playerId;
+
+        if (!playerId) {
+            console.error(`paddleMove event from socket ${socket.id} without associated playerId.`);
+            socket.emit('gameError', { message: 'Player ID not found, cannot process paddle move.' });
+            return;
+        }
+
+        const session = matchmakingService.findSessionByPlayerId(playerId);
+
+        if (!session) {
+            console.warn(`paddleMove event from player ${playerId} (socket ${socket.id}) but player not in an active session. They might have disconnected or session ended.`);
+            socket.emit('gameError', { message: 'Not in an active game session.' });
+            return;
+        }
+
+        const validatedX = Math.max(0, Math.min(payload.newx, GAME_WIDTH - PADDLE_WIDTH));
+        const playerPaddle = session.state.players.find(p => p.id === playerId);
+
+        if (playerPaddle) {
+            playerPaddle.x = validatedX;
+        } else {
+            console.error(`Critical: Could not find paddle for player ${playerId} in session ${session.id} during paddleMove.`);
+            return;
+        }
+        const paddlesUpdate: { [pId: string]: { x: number } } = {};
+        session.state.players.forEach(paddle => {
+            paddlesUpdate[paddle.id] = { x: paddle.x };
+        });
+
+        const gameStateUpdatePayload: GameStateUpdatePayload = {
+            paddles: paddlesUpdate,
+        };
+
+        io.to(session.id).emit('gameStateUpdate', gameStateUpdatePayload);
+    });
+
     socket.on('disconnect', () => {
         const disconnectedPlayerId = socket.data.playerId;
 
         if (disconnectedPlayerId) {
             const disconnectedPlayerInfo = playerService.getPlayer(disconnectedPlayerId);
             const playerName = disconnectedPlayerInfo ? disconnectedPlayerInfo.name : 'Unknown Player';
+            
+            console.log(`Player ${playerName} (ID: ${disconnectedPlayerId}, Socket: ${socket.id}) disconnected.`);
+
             playerService.removePlayer(disconnectedPlayerId);
             matchmakingService.removePlayerFromQueue(disconnectedPlayerId);
-            const gameSession = matchmakingService.findSessionByPlayerId(disconnectedPlayerId);
+            const gameSession = matchmakingService.findSessionByPlayerId(disconnectedPlayerId); // This might not find it if player1/2Id are stale after one disconnects
 
             if (gameSession) {
-                console.log(`${playerName} (ID: ${disconnectedPlayerId}) was in active game session ${gameSession.id}.`);
+                console.log(`${playerName} (ID: ${disconnectedPlayerId}) was in active game session ${gameSession.id}. Notifying opponent and cleaning up session.`);
+                
                 const otherPlayerId = gameSession.bottomPlayerId === disconnectedPlayerId
                     ? gameSession.topPlayerId
                     : gameSession.bottomPlayerId;
 
-                const otherPlayerInfo = playerService.getPlayer(otherPlayerId); // Get info for the remaining player
-
-                if (otherPlayerInfo) {
-                    let otherPlayerSocket: ServerSocketIo<any, any, any, SocketData> | undefined;
-                    for (const [, connectedSocket] of io.sockets.sockets) {
-                        if (connectedSocket.data.playerId === otherPlayerId) {
-                            otherPlayerSocket = connectedSocket;
-                            break;
-                        }
-                    }
-
-                    if (otherPlayerSocket) {
-                        // Notify the other player
-                        otherPlayerSocket.emit('opponentDisconnected', {
-                            opponentName: disconnectedPlayerInfo ? disconnectedPlayerInfo.name : 'Your opponent',
-                            opponentId: disconnectedPlayerId
-                        });
-                        console.log(`Notified ${otherPlayerInfo.name} (ID: ${otherPlayerId}) in session ${gameSession.id} about opponent disconnection.`);
-                    } else {
-                        console.log(`Could not find socket for the remaining player ${otherPlayerInfo.name} (ID: ${otherPlayerId}) in session ${gameSession.id}. They might have disconnected simultaneously.`);
-                    }
-                } else {
-                     console.warn(`Could not find PlayerInfo for the remaining player (ID: ${otherPlayerId}) in session ${gameSession.id}.`);
-                }
-
-
+                // Notify the other player
+                // We use io.to(gameSession.id) which will reach the other player if they are still in the room
+                // The client will handle the 'opponentDisconnected' event.
+                socket.to(gameSession.id).emit('opponentDisconnected', { // Emit to others in the room
+                    opponentName: disconnectedPlayerInfo ? disconnectedPlayerInfo.name : 'Your opponent',
+                    opponentId: disconnectedPlayerId
+                });
+                
+                console.log(`Notified other player in session ${gameSession.id} about ${playerName}'s disconnection.`);
+                
+                // Clean up the session
                 matchmakingService.removeSession(gameSession.id);
             } else {
-                console.log(`${playerName} (ID: ${disconnectedPlayerId}) was not found in an active game session.`);
+                console.log(`${playerName} (ID: ${disconnectedPlayerId}) was not in an active game session at time of full disconnect processing (or session already cleaned up).`);
             }
         } else {
-            console.log(`Client (Socket: ${socket.id}) disconnected. No playerId was associated with this socket, so no specific player cleanup performed.`);
+            console.log(`Client (Socket: ${socket.id}) disconnected. No playerId was associated, so no specific player cleanup performed.`);
         }
     });
 });
