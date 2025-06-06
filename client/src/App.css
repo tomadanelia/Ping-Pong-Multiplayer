@@ -1,6 +1,6 @@
 html, body {
   height: 100%;
-  margin: 0; /* Reset default margins */
+  margin: 0; 
   padding: 0;
   width: 100%;
   overflow-x: hidden;
@@ -8,11 +8,11 @@ html, body {
 
 .root {
   display: flex;
-  min-height: 100vh; /* Use 100vh to fill the viewport height */
+  min-height: 100vh; 
   width: 100%;
   margin: 0;
   padding: 0;
-  background-color: #e8e417;
+  background-color: #464638;
   box-sizing: border-box;
 }
 
