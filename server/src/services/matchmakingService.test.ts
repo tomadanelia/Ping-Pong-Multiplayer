@@ -1,5 +1,6 @@
 import { MatchmakingService } from './matchmakingService';
 import { PlayerInfo, GameSession, Paddle } from '@shared/types';
+import { Server as SocketIOServer } from 'socket.io';
 import { 
     GAME_HEIGHT, 
     GAME_WIDTH, 
@@ -9,6 +10,8 @@ import {
     BALL_RADIUS, 
     INITIAL_BALL_SPEED
 } from '@shared/constants';
+
+const GAME_TICK_RATE = 1000 / 60;
 
 const mockRandomUUID = jest.fn();
 global.crypto = {
@@ -174,8 +177,36 @@ describe('MatchmakingService', () => {
             );
             expect(totalVelocity).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
         });
-    });
-    
-    
 
+        describe("Game Loop",()=>{
+            beforeEach(() => {
+                jest.useFakeTimers();
+            });
+        
+            afterEach(() => {
+                jest.useRealTimers();
+            });
+        
+            it("should start game loop when requested", () => {
+                const mockIo = {
+                    to: jest.fn().mockReturnThis(),
+                    emit: jest.fn()
+                } as unknown as SocketIOServer;
+        
+                const p1 = createPlayer("007", "toma");
+                const p2 = createPlayer("008", "tazo");
+                service.addPlayerToQueue(p1);
+                const session = service.addPlayerToQueue(p2)!;
+                
+                service.startGameLoop(session.id, mockIo);
+                
+                expect(session.started).toBe(true);
+                
+                jest.advanceTimersByTime(GAME_TICK_RATE);
+                
+                expect(mockIo.to).toHaveBeenCalledWith(session.id);
+                expect(mockIo.emit).toHaveBeenCalledWith('gameStateUpdate', expect.any(Object));
+            });
+        });
+    });
 });

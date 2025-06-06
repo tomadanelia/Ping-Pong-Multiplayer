@@ -62,9 +62,7 @@ function App() {
           selfInfo={self} 
           opponentInfo={opponentInfo}
         />
-      )}
-      {/* You'll add logic for 'game_over' view later */}
-    </div>
+      )}    </div>
   )
 }
 

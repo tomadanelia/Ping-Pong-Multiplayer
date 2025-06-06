@@ -2,7 +2,7 @@ import { io, Socket } from 'socket.io-client';
 
 class SocketService {
     private socket: Socket | null = null;
-    private readonly serverUrl = 'http://localhost:3000';
+    private readonly serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
     connect(): Promise<void> {
         return new Promise((resolve, reject) => {
