@@ -29,8 +29,6 @@ interface GameScreenProps {
 const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentInfo }) => {
   const [ownPaddleX, setOwnPaddleX] = useState<number>(GAME_WIDTH / 2 - PADDLE_WIDTH / 2);
   const [opponentPaddleX, setOpponentPaddleX] = useState<number>(GAME_WIDTH / 2 - PADDLE_WIDTH / 2);
-  const player1Display = selfInfo.isPlayerOne ? { name: selfInfo.name} : { name: opponentInfo.name};
-  const player2Display = selfInfo.isPlayerOne ? { name: opponentInfo.name} : { name: selfInfo.name};
   const [ballPosition, setBallPosition] = useState<Ball['position']>({
     x: GAME_WIDTH / 2,
     y: GAME_HEIGHT / 2,
@@ -139,9 +137,9 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
           margin: 0,
           padding: 0
         }}>
-          <span className='player1-name' >{player1Display.name}</span>
-          <span className='vs-text' >VS</span>
-          <span className='player2-name'>{player2Display.name}</span>
+          <span className='player1-name'>{selfInfo.name}</span>
+          <span className='vs-text'>VS</span>
+          <span className='player2-name'>{opponentInfo.name}</span>
         </h1>
       </div>
       <div className="game-screen-container"> 
