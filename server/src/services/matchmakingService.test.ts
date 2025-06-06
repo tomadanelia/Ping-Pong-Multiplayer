@@ -6,7 +6,8 @@ import {
     PADDLE_HEIGHT, 
     PADDLE_OFFSET_Y, 
     PADDLE_WIDTH, 
-    BALL_RADIUS 
+    BALL_RADIUS, 
+    INITIAL_BALL_SPEED
 } from '@shared/constants';
 
 const mockRandomUUID = jest.fn();
@@ -64,7 +65,9 @@ describe('MatchmakingService', () => {
                 x: GAME_WIDTH / 2, 
                 y: GAME_HEIGHT / 2 
             });
-            expect(ball?.velocity).toEqual({ dx: 0, dy: 10 });
+            // Verify ball velocity is within expected ranges
+            expect(Math.abs(ball!.velocity.dx)).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
+            expect(Math.abs(ball!.velocity.dy)).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
             expect(ball?.radius).toBe(BALL_RADIUS);
 
             // Score verification
@@ -121,4 +124,58 @@ describe('MatchmakingService', () => {
             expect(service.findSessionByPlayerId('fake-id')).toBeUndefined();
         });
     });
+    describe("resetandserveball",()=>{
+        it('should serve ball with correct velocity when serving to Player 1', () => {
+            // Setup
+            const player1 = createPlayer('p1', 'Alice');
+            const player2 = createPlayer('p2', 'Bob');
+            service.addPlayerToQueue(player1);
+            const session = service.addPlayerToQueue(player2)!;
+            
+            // Test serving to Player 1
+            service.resetAndServeBall(session, session.topPlayerId);
+            
+            // Verify
+            const ball = session.state.ball;
+            expect(ball.velocity.dy).toBeLessThan(0); // Should move down
+            expect(Math.abs(ball.velocity.dx)).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
+            expect(Math.abs(ball.velocity.dy)).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
+        });
+        it('should serve ball with correct velocity when serving to Player 2', () => {
+            const player1 = createPlayer('p1', 'Alice');
+            const player2 = createPlayer('p2', 'Bob');
+            service.addPlayerToQueue(player1);
+            const session = service.addPlayerToQueue(player2)!;
+            service.resetAndServeBall(session,session.bottomPlayerId);
+            expect(session.state.ball.velocity.dy).toBeGreaterThan(0);
+            expect(Math.abs(session.state.ball.velocity.dx)).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
+            expect(Math.abs(session.state.ball.velocity.dy)).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
+        });
+
+        // Test initial serve (undefined case)
+        it('should serve ball with random direction when no player is specified', () => {
+            const player1 = createPlayer('p1', 'Alice');
+            const player2 = createPlayer('p2', 'Bob');
+            service.addPlayerToQueue(player1);
+            const session = service.addPlayerToQueue(player2)!;
+            
+            // Initial serve (no scoredOnPlayerId)
+            service.resetAndServeBall(session);
+            
+            const ball = session.state.ball;
+            // dy can be positive or negative
+            expect(Math.abs(ball.velocity.dy)).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
+            // dx can be positive or negative
+            expect(Math.abs(ball.velocity.dx)).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
+            // Total velocity should not exceed INITIAL_BALL_SPEED
+            const totalVelocity = Math.sqrt(
+                ball.velocity.dx * ball.velocity.dx + 
+                ball.velocity.dy * ball.velocity.dy
+            );
+            expect(totalVelocity).toBeLessThanOrEqual(INITIAL_BALL_SPEED);
+        });
+    });
+    
+    
+
 });
