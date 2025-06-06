@@ -23,7 +23,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({
     top: '10px',
     left: '50%',
     transform: 'translateX(-50%)',
-    color: 'white',
+    color: 'rgb(28, 165, 245)',
     fontSize: '24px',
     fontFamily: 'Arial, sans-serif',
     zIndex: 10, 
@@ -31,9 +31,9 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({
 
   return (
     <div style={scoreBoardStyle} data-testid="scoreboard">
-      <span>{player1Display.name}: {player1Display.score}</span>
-      <span style={{ margin: '0 15px' }}>VS</span>
-      <span>{player2Display.name}: {player2Display.score}</span>
+      <span style={{color:"rgb(245, 111, 28)"}}>{player1Display.score}</span>
+      <span style={{ margin: '0 15px' }}>:</span>
+      <span style={{color:"rgb(28, 165, 245)"}}>{player2Display.score}</span>
     </div>
   );
 };
