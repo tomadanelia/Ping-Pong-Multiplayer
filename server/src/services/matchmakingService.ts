@@ -9,7 +9,6 @@ import {
 } from '@shared/constants';
 import { PlayerId, PlayerInfo, GameSession, GameState, Ball, Paddle, GameStateUpdatePayload } from '@shared/types';
 import { Server as SocketIOServer } from 'socket.io';
-
 const GAME_TICK_RATE = 1000 / 60;
 const MAX_SCORE = 5; // Define MAX_SCORE for win condition (Step 7.1 will use this)
 
@@ -63,33 +62,6 @@ export class MatchmakingService {
             };
             const player1Paddle: Paddle = { id: player1.id, x: GAME_WIDTH / 2 - PADDLE_WIDTH / 2, y: GAME_HEIGHT - PADDLE_OFFSET_Y - PADDLE_HEIGHT, width: PADDLE_WIDTH, height: PADDLE_HEIGHT };
             const player2Paddle: Paddle = { id: player2.id, x: GAME_WIDTH / 2 - PADDLE_WIDTH / 2, y: PADDLE_OFFSET_Y, width: PADDLE_WIDTH, height: PADDLE_HEIGHT };
-            console.log("--- INITIAL GAME STATE SETUP ---");
-            console.log("CONSTANTS:", { GAME_WIDTH, GAME_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT, BALL_RADIUS, PADDLE_OFFSET_Y, INITIAL_BALL_SPEED });
-
-            console.log("Player 1 (Bottom) Paddle Initial:", {
-                id: player1Paddle.id,
-                x: player1Paddle.x,
-                y: player1Paddle.y, // This is its TOP edge
-                width: player1Paddle.width,
-                height: player1Paddle.height,
-                calculatedBottomEdge: player1Paddle.y + player1Paddle.height
-            });
-            console.log("Player 2 (Top) Paddle Initial:", {
-                id: player2Paddle.id,
-                x: player2Paddle.x,
-                y: player2Paddle.y, // This is its TOP edge
-                width: player2Paddle.width,
-                height: player2Paddle.height,
-                calculatedBottomEdge: player2Paddle.y + player2Paddle.height
-            });
-            console.log("Ball Initial:", {
-                posX: initialBall.position.x,
-                posY: initialBall.position.y,
-                radius: initialBall.radius,
-                velDX: initialBall.velocity.dx, // Velocity will be set by resetAndServeBall
-                velDY: initialBall.velocity.dy
-            });
-            console.log("---------------------------------");
             const currentGameState: GameState = {
                 players: [player1Paddle, player2Paddle],
                 ball: initialBall,
@@ -178,7 +150,7 @@ export class MatchmakingService {
 
     private gameTick(sessionId: string, io: SocketIOServer): void {
         const session = this.getSession(sessionId);
-        if (!session || !session.started || session.state.gameOver) { // Also check gameOver flag
+        if (!session || !session.started || session.state.gameOver) {
             if (session && session.state.gameOver) {
                 // Game is over, loop should be stopped by win condition logic
             } else {
@@ -188,10 +160,8 @@ export class MatchmakingService {
         }
 
         const { ball, players, score } = session.state;
-        const player1Paddle = players.find(p => p.id === session.bottomPlayerId)!; // Assumes P1 is bottom
-        const player2Paddle = players.find(p => p.id === session.topPlayerId)!;   // Assumes P2 is top
- if (Math.abs(ball.position.y - player1Paddle.y) < 50 || Math.abs(ball.position.y - (player2Paddle.y + player2Paddle.height)) < 50) {
-        }
+        const player1Paddle = players.find(p => p.id === session.bottomPlayerId)!;
+        const player2Paddle = players.find(p => p.id === session.topPlayerId)!;
 
         // 1. Update ball position
         ball.position.x += ball.velocity.dx;
@@ -218,7 +188,7 @@ export class MatchmakingService {
             }
         }
 
-        // Side wall bounces (left/right walls)
+        // 3. Side wall bounces (left/right walls)
         if ((ball.position.x - ball.radius < 0 && ball.velocity.dx < 0) ||
             (ball.position.x + ball.radius > GAME_WIDTH && ball.velocity.dx > 0)) {
             ball.velocity.dx *= -1;
@@ -227,8 +197,7 @@ export class MatchmakingService {
             if (ball.position.x + ball.radius > GAME_WIDTH) ball.position.x = GAME_WIDTH - ball.radius;
         }
 
-
-        // Step 5.1: Server-Side Paddle-Ball Collision
+        // 4. Paddle collisions
         // Check collision with player1's paddle (bottom)
         if (ball.velocity.dy > 0 && // Ball moving downwards
             ball.position.x + ball.radius >= player1Paddle.x &&
@@ -238,23 +207,17 @@ export class MatchmakingService {
             
             ball.velocity.dy *= -1;
             ball.position.y = player1Paddle.y - ball.radius; // Adjust Y to prevent sticking
-            // console.log(Session ${sessionId}: Ball hit P1 paddle.);
-            // Phase 6 will refine bounce angle here
         }
-
         // Check collision with player2's paddle (top)
         else if (ball.velocity.dy < 0 && // Ball moving upwards
             ball.position.x + ball.radius >= player2Paddle.x &&
             ball.position.x - ball.radius <= player2Paddle.x + player2Paddle.width &&
-            ball.position.y - ball.radius <= player2Paddle.y + player2Paddle.height && // ball bottom edge below paddle top edge
-            ball.position.y + ball.radius >= player2Paddle.y) { // ball top edge above paddle bottom edge
+            ball.position.y - ball.radius <= player2Paddle.y + player2Paddle.height &&
+            ball.position.y + ball.radius >= player2Paddle.y) {
             
             ball.velocity.dy *= -1;
             ball.position.y = player2Paddle.y + player2Paddle.height + ball.radius; // Adjust Y
-            // console.log(Session ${sessionId}: Ball hit P2 paddle.);
-            // Phase 6 will refine bounce angle here
         }
-
 
         // Broadcast GameStateUpdatePayload
         const paddlesUpdate: { [pId: string]: { x: number } } = {};
