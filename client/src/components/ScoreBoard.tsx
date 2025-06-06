@@ -15,9 +15,6 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({
   opponentScore,
   isSelfPlayerOne,
 }) => {
-  const player1Display = isSelfPlayerOne ? { name: selfName, score: selfScore } : { name: opponentName, score: opponentScore };
-  const player2Display = isSelfPlayerOne ? { name: opponentName, score: opponentScore } : { name: selfName, score: selfScore };
-
   const scoreBoardStyle: React.CSSProperties = {
     position: 'absolute',
     top: '10px',
@@ -31,9 +28,13 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({
 
   return (
     <div style={scoreBoardStyle} data-testid="scoreboard">
-      <span style={{color:"rgb(245, 111, 28)"}}>{player1Display.score}</span>
+      <span style={{color: isSelfPlayerOne ? "rgb(245, 111, 28)" : "rgb(28, 165, 245)"}}>
+        {isSelfPlayerOne ? selfScore : opponentScore}
+      </span>
       <span style={{ margin: '0 15px' }}>:</span>
-      <span style={{color:"rgb(28, 165, 245)"}}>{player2Display.score}</span>
+      <span style={{color: isSelfPlayerOne ? "rgb(28, 165, 245)" : "rgb(245, 111, 28)"}}>
+        {isSelfPlayerOne ? opponentScore : selfScore}
+      </span>
     </div>
   );
 };
