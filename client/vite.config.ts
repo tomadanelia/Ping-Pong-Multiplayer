@@ -8,5 +8,10 @@ export default defineConfig({
     alias: {
       '@shared': path.resolve(__dirname, '../shared')
     }
+  },
+  build: {
+    commonjsOptions: {
+      include: [/shared\/.*/, /node_modules/]
+    }
   }
 })
