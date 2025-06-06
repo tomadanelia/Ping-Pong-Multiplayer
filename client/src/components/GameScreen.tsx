@@ -16,7 +16,6 @@ import {
   PADDLE_WIDTH,
   PADDLE_HEIGHT,
   PADDLE_OFFSET_Y,
-  // BALL_RADIUS, // Already imported if BallComponent uses it internally
 } from '@shared/constants';
 
 interface GameScreenProps {
@@ -122,7 +121,10 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
   const gameScreenContainerStyle: React.CSSProperties = {
     position: 'relative', 
     width: `${GAME_WIDTH}px`,
-    margin: 'auto',
+    margin: '0 auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   };
 
   const gameAreaStyle: React.CSSProperties = {
@@ -134,11 +136,18 @@ const GameScreen: React.FC<GameScreenProps> = ({ sessionId, selfInfo, opponentIn
     cursor: 'none',
   };
 
+  const outerContainerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '100%',
+    padding: '20px',
+  };
+
   return (
-    <div> 
+    <div style={outerContainerStyle}> 
       <h2>Game Session: {sessionId}</h2>
-      <p>Playing as: {selfInfo.name} (You) vs {opponentInfo.name}</p>
-      {selfInfo.isPlayerOne ? <p>(You are defending the bottom)</p> : <p>(You are defending the top, but see it as bottom)</p>}
+      <p>You are defending the bottom</p>
 
       <div style={gameScreenContainerStyle}> 
         <ScoreBoard

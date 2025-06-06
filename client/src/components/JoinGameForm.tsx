@@ -14,17 +14,20 @@ function JoinGameForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} >
+        <div className="join-game-form">
+            <h1>Play Online Pig-Pong Game</h1>
+        <form onSubmit={handleSubmit} className="form">
             <input className="input"
                 type="text"
                 id="playerName"
-                placeholder="Write name"
+                placeholder="name"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
                 required 
             />
             <button type="submit">Join Game</button>
         </form>
+        </div>
     );
 } 
 
