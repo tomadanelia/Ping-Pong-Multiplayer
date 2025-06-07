@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {
     BALL_RADIUS,
     PADDLE_OFFSET_Y,
@@ -9,6 +10,7 @@ import {
 } from '@shared/constants';
 import { PlayerId, PlayerInfo, GameSession, GameState, Ball, Paddle, GameStateUpdatePayload } from '@shared/types';
 import { Server as SocketIOServer } from 'socket.io';
+import crypto from 'crypto';
 const GAME_TICK_RATE = 1000 / 60;
 const MAX_SCORE = 5; // Define MAX_SCORE for win condition (Step 7.1 will use this)
 
@@ -74,7 +76,7 @@ export class MatchmakingService {
             };
 
             const gameSession: GameSession = {
-                id: crypto.randomUUID(),
+                id: uuidv4(),
                 bottomPlayerId: player1.id,
                 topPlayerId: player2.id,
                 state: currentGameState,
