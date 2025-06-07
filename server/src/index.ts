@@ -29,7 +29,7 @@ const httpServer = createServer(app);
 
 const io = new Server<any, any, any, SocketData>(httpServer, {
     cors: {
-        origin: process.env.CLIENT_URL || "http://localhost:5173",
+        origin: ["http://localhost:5173", "http://51.20.31.255:5173"],
         methods: ["GET", "POST"]
     }
 });
